@@ -3,7 +3,8 @@
     <!-- Sidebar  -->
     <nav id="sidebar">
       <div class="sidebar-header top">
-        <h3>Admin Panel</h3>
+        <h3 v-if="(this.$store.getters.getUser.state == 'admin')">Admin Panel</h3>
+        <h3 v-else>Student's Panel</h3>
         <strong>BS</strong>
       </div>
 
@@ -58,7 +59,7 @@
         </li> -->
 
         <li>
-          <router-link to="/createElection">
+          <router-link to="/createElection" v-if="(this.$store.getters.getUser.state == 'admin')">
             <i class="fa fa-plus"></i> Create Election
           </router-link>
         </li>
@@ -78,7 +79,11 @@
           </router-link>
         </li>
         <li>
-          <router-link to="/participationRequests">
+          <!--
+            Note that the v-if esures that the route is only visible to an admin and not students Further modification
+            is required to further secure the route as well
+           -->
+          <router-link to="/participationRequests" v-if="(this.$store.getters.getUser.state == 'admin')">
             <i class="fa fa-envelope"></i> Participation Requests
             <span class="badge badge-primary vb" style="background-color: blue"
               >23</span
@@ -97,7 +102,7 @@
             <i class="fas fa-align-left"></i>
             <span>Toggle Sidebar</span>
           </button>
-
+          {{userName}}
         <p class="logout" v-on:click="logOut()">
         <router-link :to="{name: 'Login'}">
             Log out
@@ -106,7 +111,7 @@
         </div>
       </nav>
 
-
+      <p></p>
       <router-view></router-view>
     </div>
   </div>
@@ -116,12 +121,33 @@
 //import HelloWorld from './components/HelloWorld.vue'
 import $ from "jquery";
 
+// import Vue from 'vue'
+
+// import Echo from 'laravel-echo'
+// Vue.prototype.Echo = Echo
+
+// import Pusher from 'pusher'
+// Vue.prototype.Pusher = Pusher
+
+// this.Echo = new Echo({
+//   broadcaster: 'pusher',
+//   key: 'thekey1',
+//   cluster: 'mt1',//don't seem necessary(dsn)~
+//   forceTLS: false,//true,dsnsss~
+//   wsHost: 'http://127.0.0.1:8002', //added
+//   wsPort: 6001,//added
+//   disableStats: true,//added
+//   //scheme: process.env.MIX_PUSHER_SCHEME//added
+//   });
+
 export default {
   name: "Home",
 
   data: function () {
     return {
       access_token: this.$store.getters.getAccessToken,
+      userName: this.$store.getters.getUser.email,
+      users_data: undefined
     };
   },
   methods: {
@@ -129,12 +155,13 @@ export default {
     //   this.$router.push({ name: 'Login' });
     // },
     logOut: function(){
+      this.$store.commit("ADD_USER", undefined);
       this.$store.commit("ADD_ACCESS_TOKEN", false);
     },
    
     get_users_data: function () {
       this.$axios
-        .get("http://127.0.0.1:8001/api/venues", {
+        .get("http://127.0.0.1:8002/api/users", {
           headers: {
             Authorization: "Bearer " + this.access_token,
           },
@@ -146,10 +173,11 @@ export default {
         .catch((response) => {
           console.log(response);
         });
+        console.log(this.user_data)
     },
   },
   mounted() {
-    this.get_data();
+   
   },
 };
 
@@ -173,6 +201,10 @@ $(document).ready(function () {
 body {
   position: relative;
   top: -59px;
+}
+
+.components li{
+margin-bottom:25px ;
 }
 
 .wrapper {

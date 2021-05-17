@@ -8,6 +8,11 @@
           </div>
           <div class="panel-body">
             <form role="form">
+              <p v-if="res == 'error'" style="color: red">
+                Invalid username or password
+              </p>
+           
+
               <fieldset>
                 <div class="form-group">
                   <input
@@ -55,6 +60,9 @@
 </template>
 
 <script>
+/**
+ * In production fix all console.log tests
+ */
 export default {
   name: "Login",
   data() {
@@ -64,6 +72,8 @@ export default {
       password: "",
       client_id: undefined,
       secret: undefined,
+      res: undefined,
+      userState: undefined
     };
   },
   methods: {
@@ -77,9 +87,25 @@ export default {
         })
         .then((response) => {
           console.log(response);
-          this.secret = response["data"]["secret"];
-          this.client_id = response["data"]["client_id"];
+          let info = response["data"];
+          if(Object.prototype.hasOwnProperty.call(info, "Error") == true){
+          this.res =
+            Object.prototype.hasOwnProperty.call(info, "Error") == true
+              ? "error"
+              : "success";
+          }else{
+            /**
+             * Note that we attempt to save state of a user ie either admin or normal student, this should control
+             * interaction across the entire application
+             */
+          this.$store.commit("ADD_USER", response["data"]["user"]);
+          /**TESTT */
+          console.log(this.$store.getters.getUser);
+          let user = this.$store.getters.getUser
+          this.secret = user.oauth_client.secret
+          this.client_id = user.oauth_client.id
           this.get_token();
+          }
         })
         .catch((response) => {
           console.log(response);
@@ -102,8 +128,7 @@ export default {
           var token = this.$store.getters.getAccessToken;
           console.log(token);
           //After token has been confirmed and stored redirect user to Home
-          this.$router.push({ name: 'Home' })
-          
+          this.$router.push({ name: "Home" });
         })
         .catch((response) => {
           console.log(response);
